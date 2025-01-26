@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Level Wind Rose Animation with Landscape</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+        }
+        .chart-container {
+            width: 45%;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <h1>Multi-Level Wind Rose Animation</h1>
+        <canvas id="windRose"></canvas>
+        <div class="controls">
+            <button id="playButton">Play</button>
+            <button id="pauseButton">Pause</button>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <h1>Cross-Sectional Wind Velocity</h1>
+        <canvas id="crossSection"></canvas>
+    </div>
+
+    <script>
+        const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+        const numFrames = 56; // 3-hour intervals for a week
+        const heights = ['Ground', '50m', '100m', '200m'];
+
+        // Generate random wind speed data with diurnal and altitudinal patterns
+        function generateWindData() {
+            const baseSpeeds = [5, 6, 7, 5, 4, 3, 6, 8];
+            const diurnalPattern = Array.from({ length: 24 }, (_, i) => 1.5 + Math.sin((i / 24) * 2 * Math.PI));
+            const altitudeFactors = [1, 1.2, 1.4, 1.8]; // Factors for different heights
+            const data = [];
+
+            for (let frame = 0; frame < numFrames; frame++) {
+                const frameData = [];
+                for (let heightIndex = 0; heightIndex < heights.length; heightIndex++) {
+                    const timeOfDay = frame % 8; // Simulate diurnal pattern
+                    const speeds = baseSpeeds.map((base) => {
+                        const variation = Math.random() * 2 - 1;
+                        return Math.max(0, base * diurnalPattern[timeOfDay] * altitudeFactors[heightIndex] + variation);
+                    });
+                    frameData.push(speeds);
+                }
+                data.push(frameData);
+            }
+            return data;
+        }
+
+        const windData = generateWindData();
+        let currentFrame = 0;
+        let animationId;
+
+        // Create the wind rose chart
+        const windCtx = document.getElementById('windRose').getContext('2d');
+        const windRoseChart = new Chart(windCtx, {
+            type: 'radar',
+            data: {
+                labels: directions,
+                datasets: heights.map((height, index) => ({
+                    label: height,
+                    data: windData[currentFrame][index],
+                    backgroundColor: `rgba(${50 * (index + 1)}, ${100 - 20 * index}, ${150 + 20 * index}, 0.5)`,
+                    borderColor: `rgba(${50 * (index + 1)}, ${100 - 20 * index}, ${150 + 20 * index}, 1)`,
+                    borderWidth: 1
+                }))
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                    },
+                    title: {
+                        display: true,
+                        text: 'Wind Rose Diagram at Multiple Heights',
+                    },
+                },
+                scales: {
+                    r: {
+                        beginAtZero: true
+                    }
+                }
+            },
+        });
+
+        // Create the cross-sectional wind velocity chart
+        const crossCtx = document.getElementById('crossSection').getContext('2d');
+        const buildingLabels = ['Fire', 'Small Bldg 1', 'Small Bldg 2', 'Big Bldg', 'Small Bldg 3', 'My House'];
+        const crossSectionData = [
+            [2, 3, 4, 2, 3, 2], // Ground level
+            [4, 5, 6, 5, 4, 3], // 50m
+            [6, 7, 8, 7, 6, 5], // 100m
+            [8, 9, 10, 9, 8, 7] // 200m
+        ];
+
+        const crossSectionChart = new Chart(crossCtx, {
+            type: 'line',
+            data: {
+                labels: buildingLabels,
+                datasets: heights.map((height, index) => ({
+                    label: height,
+                    data: crossSectionData[index],
+                    borderColor: `rgba(${50 * (index + 1)}, ${100 - 20 * index}, ${150 + 20 * index}, 1)`,
+                    backgroundColor: `rgba(${50 * (index + 1)}, ${100 - 20 * index}, ${150 + 20 * index}, 0.3)`,
+                    fill: true,
+                }))
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                    },
+                    title: {
+                        display: true,
+                        text: 'Cross-Sectional Wind Velocity Across Landscape',
+                    },
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Wind Velocity (m/s)'
+                        }
+                    }
+                }
+            },
+        });
+
+        // Animation control
+        function updateFrame() {
+            currentFrame = (currentFrame + 1) % numFrames;
+            windRoseChart.data.datasets.forEach((dataset, index) => {
+                dataset.data = windData[currentFrame][index];
+            });
+            windRoseChart.update();
+
+            crossSectionChart.data.datasets.forEach((dataset, index) => {
+                dataset.data = crossSectionData[index].map(value => value * (1 + 0.1 * Math.sin(currentFrame / 5)));
+            });
+            crossSectionChart.update();
+        }
+
+        document.getElementById('playButton').addEventListener('click', () => {
+            if (!animationId) {
+                animationId = setInterval(updateFrame, 500);
+            }
+        });
+
+        document.getElementById('pauseButton').addEventListener('click', () => {
+            clearInterval(animationId);
+            animationId = null;
+        });
+    </script>
+</body>
+</html>
