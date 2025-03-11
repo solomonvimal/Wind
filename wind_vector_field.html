@@ -13,7 +13,7 @@
     <script>
         let scene, camera, renderer, controls;
         let arrows = [];
-        let windSpeed = 0.01;
+        let windSpeed = 0.05;
         let isAnimating = true;
         
         function init() {
@@ -121,8 +121,8 @@
                     item.start.x += windSpeed;
                     item.end.x += windSpeed;
                     
-                    if (item.start.x > 6) {
-                        item.start.x = -6;
+                    if (item.start.x > 16) {
+                        item.start.x = -16;
                         item.end.x = item.start.x + 1;
                     }
                     
