@@ -29,7 +29,7 @@
             controls.enableDamping = true;
             
             // Ground Plane
-            const groundGeometry = new THREE.PlaneGeometry(20, 20);
+            const groundGeometry = new THREE.PlaneGeometry(200, 200);
             const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x4CAF50, side: THREE.DoubleSide });
             const ground = new THREE.Mesh(groundGeometry, groundMaterial);
             ground.rotation.x = -Math.PI / 2;
